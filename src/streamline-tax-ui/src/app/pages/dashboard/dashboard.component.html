@@ -1,0 +1,76 @@
+<div class="page">
+  <h1 class="page-title">Tax Dashboard</h1>
+  <p class="page-sub">Track income, withholding, and your estimated tax position.</p>
+
+  <div class="seed-banner fade-up" *ngIf="showSeedBanner">
+    <div class="seed-text">
+      <svg viewBox="0 0 24 24" fill="none" width="22" height="22" stroke="#b97a00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+      </svg>
+      <span>Welcome! Load sample data to explore the dashboard instantly.</span>
+    </div>
+    <button class="btn" (click)="seedDemoData()" [disabled]="seeding">
+      <span class="spinner" *ngIf="seeding"></span>
+      <span *ngIf="!seeding">Load Sample Data</span>
+    </button>
+  </div>
+
+  <div class="cards fade-up" *ngIf="summary">
+    <div class="stat-card">
+      <div class="stat-icon income"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></div>
+      <div class="stat-body">
+        <span class="stat-label">Total Income</span>
+        <span class="stat-value">{{ summary.totalIncome | currency }}</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon withheld"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+      <div class="stat-body">
+        <span class="stat-label">Tax Withheld</span>
+        <span class="stat-value">{{ summary.totalTaxWithheld | currency }}</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon estimated"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+      <div class="stat-body">
+        <span class="stat-label">Estimated Tax Due</span>
+        <span class="stat-value">{{ summary.estimatedTaxDue | currency }}</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" [style.background]="summary.balance >= 0 ? 'var(--gradient-success)' : 'var(--gradient-danger)'"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+      <div class="stat-body">
+        <span class="stat-label">Balance</span>
+        <span class="stat-value">{{ summary.balance | currency }}</span>
+        <span class="stat-tag" [style.color]="summary.balance >= 0 ? '#12a05c' : '#d6304a'">
+          {{ summary.balance >= 0 ? 'Owed to you' : 'You owe' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-row fade-up" *ngIf="summary">
+    <div class="info-card">
+      <span class="info-label">Withholding Rate</span>
+      <span class="info-value">{{ summary.taxWithholdingRate | percent }}</span>
+    </div>
+    <div class="info-card">
+      <span class="info-label">Transactions Tracked</span>
+      <span class="info-value">{{ summary.transactionCount }}</span>
+    </div>
+    <div class="info-card reserve-card" [class.surplus]="summary.isSurplus">
+      <div class="reserve-body">
+        <span class="info-label">Tax Reserve (25%)</span>
+        <span class="info-value">{{ summary.availableReserve | currency }}</span>
+        <span class="stat-tag" [style.color]="summary.isSurplus ? '#12a05c' : '#b97a00'">
+          {{ summary.isSurplus ? 'Surplus reserve — on track' : 'Reserve covers your tax bill' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty card" *ngIf="!summary && !showSeedBanner">
+    <p>Loading your tax summary...</p>
+    <div class="spinner-dark" style="margin:1rem auto"></div>
+  </div>
+</div>

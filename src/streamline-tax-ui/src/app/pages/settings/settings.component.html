@@ -1,0 +1,61 @@
+<div class="page fade-up">
+  <h1 class="page-title">Settings</h1>
+  <p class="page-sub">Manage your profile and preferences</p>
+
+  <div class="settings-grid">
+
+    <section class="card panel">
+      <h2 class="panel-title">Profile</h2>
+
+      <div class="row">
+        <div class="field">
+          <label for="name">Username</label>
+          <input id="name" class="input" [(ngModel)]="name" name="name" type="text" placeholder="Your name" />
+        </div>
+      </div>
+
+      <div class="row read-only">
+        <div class="field">
+          <label>Email</label>
+          <input class="input" [value]="auth.email() || ''" readonly />
+        </div>
+      </div>
+
+      <button class="btn" (click)="saveName()" [disabled]="saving">
+        <span *ngIf="saving" class="spinner"></span>
+        <span *ngIf="!saving">Save Changes</span>
+      </button>
+
+      <div *ngIf="message" class="alert" [ngClass]="messageType === 'success' ? 'alert-success' : 'alert-error'">
+        {{ message }}
+      </div>
+    </section>
+
+    <section class="card panel">
+      <h2 class="panel-title">Appearance</h2>
+
+      <div class="theme-option">
+        <div>
+          <p class="theme-label">Theme</p>
+          <p class="theme-desc">Choose between light and dark mode.</p>
+        </div>
+        <div class="segmented">
+          <button class="seg-btn" [class.on]="theme.theme() === 'light'" (click)="setTheme('light')">
+            <svg viewBox="0 0 24 24" fill="none" width="16" height="16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"/>
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>
+            Light
+          </button>
+          <button class="seg-btn" [class.on]="theme.theme() === 'dark'" (click)="setTheme('dark')">
+            <svg viewBox="0 0 24 24" fill="none" width="16" height="16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+            </svg>
+            Dark
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>

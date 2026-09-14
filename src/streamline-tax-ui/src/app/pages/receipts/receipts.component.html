@@ -1,0 +1,53 @@
+<div class="page">
+  <h1 class="page-title">Receipts</h1>
+  <p class="page-sub">Upload a receipt, and OCR extracts the merchant, amount, and date.</p>
+
+  <div class="dropzone fade-up" (click)="fileInput.click()" (dragover)="$event.preventDefault()" (drop)="onDrop($event)">
+    <svg viewBox="0 0 24 24" fill="none" width="36" height="36" stroke="var(--primary)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+      <path d="M17 8l-5-5-5 5"/>
+      <path d="M12 3v12"/>
+    </svg>
+    <p class="dz-title">Drop a receipt here or click to browse</p>
+    <p class="dz-sub">PNG, JPG or PDF — processed automatically</p>
+    <input type="file" #fileInput hidden (change)="onFileSelected($event)" accept="image/*,.pdf" />
+  </div>
+
+  <div *ngIf="uploading" class="processing">
+    <span class="spinner-dark"></span>
+    <span>Processing receipt... this may take a few seconds.</span>
+  </div>
+
+  <div class="table-wrap fade-up" *ngIf="receipts.length" style="margin-top:1.5rem">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>Merchant</th>
+          <th>Amount</th>
+          <th>Date</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of receipts">
+          <td><span class="gename">{{ r.fileName }}</span></td>
+          <td>{{ r.merchantName || '-' }}</td>
+          <td>{{ r.amount ? '$' + r.amount : '-' }}</td>
+          <td>{{ r.receiptDate ? (r.receiptDate | date) : '-' }}</td>
+          <td>
+            <span class="badge" [ngClass]="{
+              'success': r.status === 'Processed',
+              'danger': r.status === 'Failed',
+              'warning': r.status === 'Pending' || r.status === 'Processing'
+            }">{{ r.status }}</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="empty card" *ngIf="!receipts.length && !uploading" style="margin-top:1.5rem">
+    <p>No receipts yet.</p>
+  </div>
+</div>

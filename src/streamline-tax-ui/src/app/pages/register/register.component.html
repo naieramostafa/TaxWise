@@ -1,0 +1,33 @@
+<div class="auth-page">
+  <div class="auth-card fade-up">
+    <div class="auth-head">
+      <div class="auth-logo">
+        <svg viewBox="0 0 24 24" fill="none" width="26" height="26">
+          <path d="M12 17.5a.75.75 0 011.5 0V13h3a.75.75 0 010 1.5h-1.6c-.2 1.5-1.3 2.7-2.9 2.7h-.7v1a.75.75 0 01-1.5 0v-1h-3a.75.75 0 010-1.5h1.6c.2-1.5 1.3-2.7 2.9-2.7h.7v-1a.75.75 0 011.5 0v1H8a.75.75 0 010-1.5h.6c.2-1.5 1.3-2.7 2.9-2.7h2.9v-1a.75.75 0 011.5 0v1h3a.75.75 0 010 1.5h-1.6c.2 1.5 1.3 2.7 2.9 2.7h.9v1.5H12z" fill="#fff"/>
+        </svg>
+      </div>
+      <h1>Create Account</h1>
+      <p>Start digitizing and categorizing your income today.</p>
+    </div>
+    <form (ngSubmit)="onSubmit()">
+      <div class="field">
+        <label for="name">Full Name</label>
+        <input id="name" class="input" [(ngModel)]="name" name="name" type="text" placeholder="John Doe" required />
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" class="input" [(ngModel)]="email" name="email" type="email" placeholder="you@example.com" required />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" class="input" [(ngModel)]="password" name="password" type="password" placeholder="6+ characters" required />
+      </div>
+      <button type="submit" class="btn btn-block" [disabled]="loading">
+        <span class="spinner" *ngIf="loading"></span>
+        <span *ngIf="!loading">Create Account</span>
+      </button>
+      <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+    </form>
+    <p class="auth-foot">Already have an account? <a routerLink="/login">Sign in</a></p>
+  </div>
+</div>

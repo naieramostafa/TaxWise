@@ -1,0 +1,113 @@
+<div class="page">
+  <h1 class="page-title">Tax History</h1>
+  <p class="page-sub">Quarterly tax periods, comparison vs the previous period, and read-only locking.</p>
+
+  <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+  <!-- Comparison summary -->
+  <div class="comparison fade-up" *ngIf="comparison">
+    <div class="cmp-card">
+      <span class="cmp-label">Income vs Previous</span>
+      <span class="cmp-value" [class]="changeClass(comparison.incomeChangePercent)">
+        {{ formatPercent(comparison.incomeChangePercent) }}
+      </span>
+    </div>
+    <div class="cmp-card">
+      <span class="cmp-label">Tax Withheld vs Previous</span>
+      <span class="cmp-value" [class]="changeClass(comparison.taxWithheldChangePercent)">
+        {{ formatPercent(comparison.taxWithheldChangePercent) }}
+      </span>
+    </div>
+    <div class="cmp-card">
+      <span class="cmp-label">Tax Due vs Previous</span>
+      <span class="cmp-value" [class]="changeClass(comparison.estimatedTaxDueChangePercent)">
+        {{ formatPercent(comparison.estimatedTaxDueChangePercent) }}
+      </span>
+    </div>
+    <div class="cmp-card">
+      <span class="cmp-label">Transactions vs Previous</span>
+      <span class="cmp-value" [class]="changeClass(comparison.transactionCountChangePercent)">
+        {{ formatPercent(comparison.transactionCountChangePercent) }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Period list -->
+  <div class="table-wrap fade-up" *ngIf="periods.length">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Period</th>
+          <th>Dates</th>
+          <th>Status</th>
+          <th>Income</th>
+          <th>Tax Withheld</th>
+          <th>Tax Due</th>
+          <th>Balance</th>
+          <th>Txns</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of periods" [class.selected]="detail?.period?.id === p.id">
+          <td><strong>{{ p.name }}</strong></td>
+          <td class="muted">{{ p.startDate | date:'MMM d, y' }} – {{ p.endDate | date:'MMM d, y' }}</td>
+          <td><span [class]="statusClass(p.status)">{{ p.status }}</span></td>
+          <td>{{ p.totalIncome | currency }}</td>
+          <td>{{ p.totalTaxWithheld | currency }}</td>
+          <td>{{ p.estimatedTaxDue | currency }}</td>
+          <td [class.down]="p.balance < 0" [class.up]="p.balance >= 0">{{ p.balance | currency }}</td>
+          <td>{{ p.transactionCount }}</td>
+          <td class="actions">
+            <button class="btn-ghost btn-sm" (click)="toggleDetail(p.id)" [disabled]="loadingDetailId === p.id">
+              {{ detail?.period?.id === p.id ? 'Hide' : 'Details' }}
+            </button>
+            <button class="btn-ghost btn-sm" *ngIf="p.status === 'Open'" (click)="closePeriod(p)" [disabled]="isBusy(p.id)">
+              <span class="spinner" *ngIf="isBusy(p.id)"></span>
+              <span *ngIf="!isBusy(p.id)">Close</span>
+            </button>
+            <button class="btn-ghost btn-sm" *ngIf="p.status === 'Open' || p.status === 'Closed'" (click)="lockPeriod(p)" [disabled]="isBusy(p.id)">
+              <span class="spinner" *ngIf="isBusy(p.id)"></span>
+              <span *ngIf="!isBusy(p.id)">Lock</span>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Period detail -->
+  <div class="detail card fade-up" *ngIf="detail">
+    <div class="detail-head">
+      <h2>{{ detail.period.name }} — Transactions</h2>
+      <span [class]="statusClass(detail.period.status)">{{ detail.period.status }}</span>
+    </div>
+    <table class="table" *ngIf="detail.transactions.length">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Category</th>
+          <th>Amount</th>
+          <th>Tax Withheld</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let t of detail.transactions">
+          <td>{{ t.transactionDate | date }}</td>
+          <td class="desc">{{ t.description }}</td>
+          <td>{{ formatCategory(t.category) }}</td>
+          <td class="amount">{{ t.amount | currency }}</td>
+          <td class="withheld">{{ t.taxWithheld | currency }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="empty" *ngIf="!detail.transactions.length">
+      <p>No transactions in this period.</p>
+    </div>
+  </div>
+
+  <div class="empty card" *ngIf="!periods.length && !error">
+    <p>No tax periods yet. Upload a receipt or load sample data to create your first period.</p>
+  </div>
+</div>

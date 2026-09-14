@@ -1,0 +1,81 @@
+<div class="page">
+  <h1 class="page-title">Transactions</h1>
+  <p class="page-sub">Every income source, auto-categorized with 25% tax withheld.</p>
+
+  <div class="alert alert-error" *ngIf="error">{{ error }}</div>
+
+  <div class="toolbar fade-up" *ngIf="allTransactions.length">
+    <div class="filters">
+      <button class="filter-btn" [class.active]="filter === 'all'" (click)="setFilter('all')">All ({{ allTransactions.length }})</button>
+      <button class="filter-btn" [class.active]="filter === 'uncategorized'" (click)="setFilter('uncategorized')">
+        Uncategorized ({{ uncategorizedCount }})
+      </button>
+    </div>
+  </div>
+
+  <div class="table-wrap fade-up" *ngIf="transactions.length">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Amount</th>
+          <th>Category</th>
+          <th>Tax Withheld</th>
+          <th>Period</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let t of transactions">
+          <tr *ngIf="editingId !== t.id">
+            <td>{{ t.transactionDate | date }}</td>
+            <td><span class="desc">{{ t.description }}</span></td>
+            <td class="amount">{{ t.amount | currency }}</td>
+            <td>
+              <select class="cat-select" [(ngModel)]="t.category" (ngModelChange)="onCategoryChange(t.id, $event)" [disabled]="periodLocked(t)">
+                <option *ngFor="let c of categories" [value]="c">{{ formatCategory(c) }}</option>
+              </select>
+            </td>
+            <td class="withheld">{{ t.taxWithheld | currency }}</td>
+            <td>
+              <span class="badge neutral" *ngIf="periodName(t)">{{ periodName(t) }}</span>
+              <span class="badge" [class.danger]="periodLocked(t)" *ngIf="periodLocked(t)">Locked</span>
+              <span class="muted" *ngIf="!periodName(t)">—</span>
+            </td>
+            <td class="actions" *ngIf="!periodLocked(t)">
+              <button class="btn-ghost btn-xs" (click)="startEdit(t)">Edit</button>
+              <button class="btn-ghost btn-xs danger-text" (click)="deleteTransaction(t)">Delete</button>
+            </td>
+            <td class="muted" *ngIf="periodLocked(t)">Read-only</td>
+          </tr>
+          <tr *ngIf="editingId === t.id" class="edit-row">
+            <td><input class="input" type="date" [(ngModel)]="editDate" /></td>
+            <td><input class="input" type="text" [(ngModel)]="editDescription" /></td>
+            <td><input class="input" type="number" step="0.01" [(ngModel)]="editAmount" /></td>
+            <td>
+              <select class="cat-select" [(ngModel)]="t.category" (ngModelChange)="onCategoryChange(t.id, $event)">
+                <option *ngFor="let c of categories" [value]="c">{{ formatCategory(c) }}</option>
+              </select>
+            </td>
+            <td class="withheld">{{ t.taxWithheld | currency }}</td>
+            <td></td>
+            <td class="actions">
+              <button class="btn-ghost btn-xs" (click)="saveEdit(t)">Save</button>
+              <button class="btn-ghost btn-xs" (click)="cancelEdit()">Cancel</button>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="empty card" *ngIf="!allTransactions.length">
+    <p>No transactions yet.</p>
+    <p style="margin-top:.5rem;font-size:.85rem">Upload a receipt or load sample data from the dashboard.</p>
+  </div>
+
+  <div class="empty card" *ngIf="allTransactions.length && !transactions.length">
+    <p>No uncategorized transactions. Nice work!</p>
+  </div>
+</div>

@@ -1,0 +1,15 @@
+@import url('../../shared/auth-page.css');
+
+.auth-card--center { display: grid; place-items: center; padding: 3rem 2.5rem; }
+
+.auth-logo--success {
+  width: 56px; height: 56px; margin-bottom: 1rem;
+  background: var(--gradient-success);
+  box-shadow: 0 6px 18px rgba(67,233,123,.45);
+}
+
+.auth-logo--success svg { width: 26px; height: 26px; }
+
+.auth-head h1 { margin-bottom: 1rem; }
+
+.muted { color: var(--text-muted); }

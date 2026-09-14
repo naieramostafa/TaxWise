@@ -1,0 +1,51 @@
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+dist/
+*.dll
+*.exe
+*.pdb
+
+## NuGet
+*.nupkg
+**/packages/*
+!**/packages/build/
+
+## Node
+node_modules/
+npm-debug.log
+
+## OCR training data (large binary)
+tessdata/
+*.traineddata
+
+## IDE
+.idea/
+*.swp
+*.swo
+
+## OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+## Logs
+*.log
+logs/
+
+## Docker
+docker-compose.override.yml
+
+## Secrets
+.env
+appsettings.json
+appsettings.Development.json

@@ -1,0 +1,56 @@
+.seed-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  background: linear-gradient(135deg, #fff8e1, #fff3cd);
+  border: 1px solid #ffe082; border-radius: var(--radius);
+  padding: 1rem 1.25rem; margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.seed-text { display: flex; align-items: center; gap: .6rem; color: #7a5a00; font-weight: 500; font-size: .93rem; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.1rem; }
+
+.stat-card {
+  display: flex; align-items: center; gap: 1rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.25rem;
+  box-shadow: var(--shadow-sm); transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+.stat-icon {
+  width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0;
+  display: grid; place-items: center;
+}
+
+.stat-icon svg { width: 22px; height: 22px; }
+
+.income { background: var(--gradient-brand); }
+.withheld { background: var(--gradient-danger); }
+.estimated { background: var(--gradient-info); }
+
+.stat-body { display: flex; flex-direction: column; min-width: 0; }
+
+.stat-label { font-size: .8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+
+.stat-value { font-size: 1.45rem; font-weight: 800; letter-spacing: -.02em; margin-top: .15rem; }
+
+.stat-tag { font-size: .78rem; font-weight: 700; margin-top: .1rem; }
+
+.info-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.1rem; margin-top: 1.1rem; }
+
+.info-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.25rem;
+  box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: space-between;
+}
+
+.info-label { color: var(--text-muted); font-weight: 600; font-size: .9rem; }
+.info-value { font-size: 1.2rem; font-weight: 800; }
+
+.reserve-card { border-color: rgba(67,233,123,.35); background: linear-gradient(135deg, rgba(67,233,123,.07), transparent); }
+.reserve-card.surplus { border-color: rgba(67,233,123,.45); }
+.reserve-body { display: flex; flex-direction: column; gap: .1rem; }
+
+@media (max-width: 640px) { .seed-banner { flex-direction: column; align-items: flex-start; } }

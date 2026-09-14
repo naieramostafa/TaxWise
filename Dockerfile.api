@@ -1,0 +1,19 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY src/StreamlineTax.Domain/StreamlineTax.Domain.csproj src/StreamlineTax.Domain/
+COPY src/StreamlineTax.Application/StreamlineTax.Application.csproj src/StreamlineTax.Application/
+COPY src/StreamlineTax.Infrastructure/StreamlineTax.Infrastructure.csproj src/StreamlineTax.Infrastructure/
+COPY src/StreamlineTax.Api/StreamlineTax.Api.csproj src/StreamlineTax.Api/
+RUN dotnet restore src/StreamlineTax.Api/StreamlineTax.Api.csproj
+
+COPY src/ src/
+WORKDIR /src/src/StreamlineTax.Api
+RUN dotnet publish -c Release -o /app/publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+COPY --from=build /app/publish .
+COPY tessdata /app/tessdata
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "StreamlineTax.Api.dll"]

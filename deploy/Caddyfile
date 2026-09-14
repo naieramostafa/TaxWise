@@ -1,0 +1,25 @@
+{
+	# Email for Let's Encrypt certificate notifications (required for auto-HTTPS)
+	email your@email.com
+}
+
+# UI served on HTTPS
+localhost {
+	encode gzip
+	# Serve the built Angular app
+	root * /srv/streamline-tax-ui
+	file_server
+
+	# Proxy API requests to the .NET API container
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+
+	handle /hubs/* {
+		reverse_proxy api:8080
+	}
+
+	handle /hangfire* {
+		reverse_proxy api:8080
+	}
+}
