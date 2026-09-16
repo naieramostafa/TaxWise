@@ -6,11 +6,13 @@ using StreamlineTax.Domain.Enums;
 
 namespace StreamlineTax.Application.Transactions.Queries.GetTransactions;
 
-public class GetTransactionsQueryHandler(IApplicationDbContext context) : IRequestHandler<GetTransactionsQuery, List<Transaction>>
+public class GetTransactionsQueryHandler(IApplicationDbContext context) : IRequestHandler<GetTransactionsQuery, PaginatedResult<Transaction>>
 {
-    public async Task<List<Transaction>> Handle(GetTransactionsQuery request, CancellationToken cancellationToken)
+    public async Task<PaginatedResult<Transaction>> Handle(GetTransactionsQuery request, CancellationToken cancellationToken)
     {
-        var query = context.Transactions.Where(t => t.UserId == request.UserId);
+        var query = context.Transactions
+            .AsNoTracking()
+            .Where(t => t.UserId == request.UserId);
 
         if (request.Year.HasValue)
         {
@@ -28,6 +30,21 @@ public class GetTransactionsQueryHandler(IApplicationDbContext context) : IReque
             query = query.Where(t => t.Category == category);
         }
 
-        return await query.OrderByDescending(t => t.TransactionDate).ToListAsync(cancellationToken);
+        var totalCount = await query.CountAsync(cancellationToken);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize);
+        var page = Math.Max(1, Math.Min(request.Page, totalPages));
+
+        var items = await query
+            .OrderByDescending(t => t.TransactionDate)
+            .Skip((page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToListAsync(cancellationToken);
+
+        return new PaginatedResult<Transaction>(
+            items,
+            totalCount,
+            page,
+            request.PageSize,
+            totalPages);
     }
 }

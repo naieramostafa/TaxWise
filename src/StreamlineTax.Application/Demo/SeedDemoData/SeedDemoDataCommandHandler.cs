@@ -30,6 +30,8 @@ public class SeedDemoDataCommandHandler(
         var existing = await context.Transactions
             .CountAsync(t => t.UserId == request.UserId, cancellationToken);
 
+        var transactionsCreated = 0;
+
         if (existing == 0)
         {
             foreach (var (amount, category, desc, monthsAgo) in seed)
@@ -51,7 +53,10 @@ public class SeedDemoDataCommandHandler(
                     TaxWithheld = withheld,
                     TaxPeriodId = taxPeriod.Id
                 });
+                transactionsCreated++;
             }
+
+            await context.SaveChangesAsync(cancellationToken);
         }
 
         var taxAccount = await context.TaxAccounts
@@ -63,28 +68,32 @@ public class SeedDemoDataCommandHandler(
             context.TaxAccounts.Add(taxAccount);
         }
 
-        var totalIncome = seed.Sum(s => s.Amount);
-        var totalWithheld = taxCalculation.CalculateTaxWithholding(totalIncome, user.TaxWithholdingRate);
-
-        taxAccount.TotalIncome = totalIncome;
-        taxAccount.TotalTaxWithheld = totalWithheld;
-        taxAccount.EstimatedTaxDue = taxCalculation.EstimateAnnualTaxDue(totalIncome);
-        taxAccount.Balance = totalWithheld - taxAccount.EstimatedTaxDue;
-        taxAccount.UpdatedAt = now;
-
-        await context.SaveChangesAsync(cancellationToken);
-
-        // Recalculate each period summary from its underlying transactions
-        var periodIds = await context.TaxPeriods
-            .Where(p => p.TaxAccountId == taxAccount.Id)
-            .Select(p => p.Id)
-            .ToListAsync(cancellationToken);
-
-        foreach (var periodId in periodIds)
+        // Only update totals if we actually created new transactions
+        if (transactionsCreated > 0)
         {
-            await taxPeriodService.RecalculateAsync(request.UserId, periodId, cancellationToken);
+            var totalIncome = seed.Sum(s => s.Amount);
+            var totalWithheld = taxCalculation.CalculateTaxWithholding(totalIncome, user.TaxWithholdingRate);
+
+            taxAccount.TotalIncome = totalIncome;
+            taxAccount.TotalTaxWithheld = totalWithheld;
+            taxAccount.EstimatedTaxDue = taxCalculation.EstimateAnnualTaxDue(totalIncome);
+            taxAccount.Balance = totalWithheld - taxAccount.EstimatedTaxDue;
+            taxAccount.UpdatedAt = now;
+
+            await context.SaveChangesAsync(cancellationToken);
+
+            // Recalculate each period summary from its underlying transactions
+            var periodIds = await context.TaxPeriods
+                .Where(p => p.TaxAccountId == taxAccount.Id)
+                .Select(p => p.Id)
+                .ToListAsync(cancellationToken);
+
+            foreach (var periodId in periodIds)
+            {
+                await taxPeriodService.RecalculateAsync(request.UserId, periodId, cancellationToken);
+            }
         }
 
-        return new SeedDemoDataResult(seed.Length, totalIncome, totalWithheld);
+        return new SeedDemoDataResult(transactionsCreated, taxAccount.TotalIncome, taxAccount.TotalTaxWithheld);
     }
 }

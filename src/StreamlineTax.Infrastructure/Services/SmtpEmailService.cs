@@ -16,14 +16,12 @@ public class SmtpEmailService(IConfiguration configuration, ILogger<SmtpEmailSer
     private readonly string _password = configuration["Smtp:Password"] ?? "";
     private readonly string _from = configuration["Smtp:From"] ?? "no-reply@streamlinetax.local";
 
-    // Optional DKIM signing (recommended for production with your own domain)
     private readonly string? _dkimDomain = configuration["Smtp:DkimDomain"];
     private readonly string _dkimSelector = configuration["Smtp:DkimSelector"] ?? "mail";
     private readonly string? _dkimPrivateKeyPath = configuration["Smtp:DkimPrivateKeyPath"];
 
     public async Task SendEmailAsync(string to, string subject, string htmlBody, string? plainBody = null)
     {
-        // If SMTP is not configured, log the email content (dev mode fallback)
         if (string.IsNullOrWhiteSpace(_host))
         {
             logger.LogInformation(
@@ -61,9 +59,27 @@ public class SmtpEmailService(IConfiguration configuration, ILogger<SmtpEmailSer
 
             logger.LogInformation("Email sent successfully to {To}", to);
         }
-        catch (Exception ex)
+        catch (SmtpProtocolException ex)
         {
-            logger.LogError(ex, "Failed to send email to {To} via {Host}", to, _host);
+            logger.LogError(ex, "SMTP protocol error sending email to {To} via {Host}:{Port} - {ErrorMessage}",
+                to, _host, _port, ex.Message);
+            throw;
+        }
+        catch (AuthenticationException ex)
+        {
+            logger.LogError(ex, "Authentication error with SMTP {Host}:{Port}",
+                _host, _port);
+            throw;
+        }
+        catch (OperationCanceledException ex)
+        {
+            logger.LogWarning(ex, "Email sending to {To} was cancelled or timed out", to);
+            throw;
+        }
+        catch (IOException ex)
+        {
+            logger.LogError(ex, "IO error sending email to {To} via {Host}:{Port}",
+                to, _host, _port);
             throw;
         }
     }
@@ -82,11 +98,14 @@ public class SmtpEmailService(IConfiguration configuration, ILogger<SmtpEmailSer
                 BodyCanonicalizationAlgorithm = DkimCanonicalizationAlgorithm.Simple
             };
 
-            // Sign From, To, Subject and Date (standard DKIM header set).
             var headers = new[] { HeaderId.From, HeaderId.To, HeaderId.Subject, HeaderId.Date };
             signer.Sign(message, headers);
 
             logger.LogInformation("Applied DKIM signature for {Domain}", _dkimDomain);
+        }
+        catch (FileNotFoundException ex)
+        {
+            logger.LogWarning(ex, "DKIM private key file not found at {Path}", _dkimPrivateKeyPath);
         }
         catch (Exception ex)
         {

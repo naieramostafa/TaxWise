@@ -18,5 +18,7 @@ public class TaxAccountConfiguration : IEntityTypeConfiguration<TaxAccount>
             .WithOne(u => u.TaxAccount)
             .HasForeignKey<TaxAccount>(t => t.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(t => t.UserId).IsUnique();
     }
 }

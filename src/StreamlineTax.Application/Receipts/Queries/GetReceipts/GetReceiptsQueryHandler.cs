@@ -10,6 +10,7 @@ public class GetReceiptsQueryHandler(IApplicationDbContext context) : IRequestHa
     public async Task<List<Receipt>> Handle(GetReceiptsQuery request, CancellationToken cancellationToken)
     {
         return await context.Receipts
+            .AsNoTracking()
             .Where(r => r.UserId == request.UserId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);

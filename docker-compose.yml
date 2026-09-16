@@ -1,6 +1,9 @@
+version: '3.8'
+
 services:
   postgres:
     image: postgres:16-alpine
+    container_name: streamline_tax_db
     environment:
       POSTGRES_DB: streamline_tax
       POSTGRES_USER: postgres
@@ -8,15 +11,29 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
+    container_name: streamline_tax_redis
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   minio:
     image: minio/minio:latest
+    container_name: streamline_tax_minio
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
@@ -25,57 +42,25 @@ services:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - miniodata:/data
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
 
   seq:
     image: datalust/seq:latest
-    ports:
-      - "5341:80"
+    container_name: streamline_tax_seq
     environment:
       ACCEPT_EULA: "Y"
-
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile.api
-    environment:
-      ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: Host=postgres;Database=streamline_tax;Username=postgres;Password=postgres
-      ConnectionStrings__Redis: redis:6379
-      JWT_KEY: ${JWT_KEY:-ChangeMeInProductionAtLeast32CharsLong!!}
-      Storage__ServiceUrl: http://minio:9000
-      Storage__AccessKey: minioadmin
-      Storage__SecretKey: minioadmin
-      Frontend__Url: ${FRONTEND_URL:-http://localhost:4200}
-      Smtp__Host: ${SMTP_HOST:-}
-      Smtp__Port: ${SMTP_PORT:-587}
-      Smtp__Username: ${SMTP_USERNAME:-}
-      Smtp__Password: ${SMTP_PASSWORD:-}
-      Smtp__From: ${SMTP_FROM:-no-reply@streamlinetax.local}
-    depends_on:
-      - postgres
-      - redis
-      - minio
     ports:
-      - "8080:8080"
-
-  caddy:
-    image: caddy:2-alpine
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
+      - "5341:80"
     volumes:
-      - ./deploy/Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-      - ./src/streamline-tax-ui/dist/streamline-tax-ui:/srv/streamline-tax-ui:ro
-    depends_on:
-      - api
+      - seq_data:/data
 
 volumes:
-  pgdata:
-  miniodata:
-  caddy_data:
-  caddy_config:
+  postgres_data:
+  redis_data:
+  minio_data:
+  seq_data:

@@ -22,5 +22,6 @@ public class TaxPeriodConfiguration : IEntityTypeConfiguration<TaxPeriod>
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(p => new { p.TaxAccountId, p.Status });
+        builder.HasIndex(p => new { p.TaxAccountId, p.StartDate });
     }
 }

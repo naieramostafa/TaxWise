@@ -1,5 +1,5 @@
 using FluentValidation;
-using StreamlineTax.Api.Controllers;
+using StreamlineTax.Api.Models;
 
 namespace StreamlineTax.Api.Validators;
 

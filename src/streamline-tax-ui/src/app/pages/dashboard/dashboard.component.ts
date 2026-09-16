@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, DestroyRef, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe, PercentPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiService } from '../../services/api.service';
@@ -15,27 +15,38 @@ import { TaxSummary } from '../../models';
 export class DashboardComponent implements OnInit {
   summary?: TaxSummary;
   showSeedBanner = true;
-  seeding = false;
+  seeding = signal(false);
+  loading = signal(true);
+  error = signal<string | null>(null);
 
   private destroyRef = inject(DestroyRef);
   private api = inject(ApiService);
 
   ngOnInit() {
-    this.api.getTaxSummary().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(s => {
-      this.summary = s;
-      if ((s.transactionCount ?? 0) > 0) this.showSeedBanner = false;
+    this.loading.set(true);
+    this.error.set(null);
+    this.api.getTaxSummary().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: s => {
+        this.summary = s;
+        if ((s.transactionCount ?? 0) > 0) this.showSeedBanner = false;
+        this.loading.set(false);
+      },
+      error: (err) => {
+        this.error.set('Failed to load dashboard data');
+        this.loading.set(false);
+      }
     });
   }
 
   seedDemoData() {
-    this.seeding = true;
+    this.seeding.set(true);
     this.api.seedDemoData().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
-        this.seeding = false;
+        this.seeding.set(false);
         this.showSeedBanner = false;
         this.ngOnInit();
       },
-      error: () => { this.seeding = false; }
+      error: () => { this.seeding.set(false); }
     });
   }
 }

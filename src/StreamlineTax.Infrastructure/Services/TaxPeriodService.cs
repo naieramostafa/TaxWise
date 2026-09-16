@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using StreamlineTax.Application.Common.Interfaces;
+using StreamlineTax.Application.Common.Models;
 using StreamlineTax.Domain.Entities;
 using StreamlineTax.Domain.Enums;
 
@@ -54,6 +55,7 @@ public class TaxPeriodService(
     public async Task<TaxPeriodDto?> GetByIdAsync(Guid userId, Guid periodId, CancellationToken cancellationToken = default)
     {
         var period = await context.TaxPeriods
+            .AsNoTracking()
             .Where(p => p.TaxAccountId == context.TaxAccounts
                 .Where(t => t.UserId == userId).Select(t => t.Id).FirstOrDefault())
             .FirstOrDefaultAsync(p => p.Id == periodId, cancellationToken);
@@ -70,6 +72,7 @@ public class TaxPeriodService(
         }
 
         var count = await context.Transactions
+            .AsNoTracking()
             .CountAsync(t => t.TaxPeriodId == periodId, cancellationToken);
 
         return new TaxPeriodDto(
@@ -95,6 +98,7 @@ public class TaxPeriodService(
             .FirstOrDefaultAsync(cancellationToken);
 
         var periods = await context.TaxPeriods
+            .AsNoTracking()
             .Where(p => p.TaxAccountId == taxAccountId)
             .OrderByDescending(p => p.StartDate)
             .ToListAsync(cancellationToken);
@@ -117,6 +121,7 @@ public class TaxPeriodService(
 
         var periodIds = periods.Select(p => p.Id).ToList();
         var transactionCounts = await context.Transactions
+            .AsNoTracking()
             .Where(t => t.TaxPeriodId.HasValue && periodIds.Contains(t.TaxPeriodId.Value))
             .GroupBy(t => t.TaxPeriodId!.Value)
             .Select(g => new { PeriodId = g.Key, Count = g.Count() })
@@ -166,6 +171,8 @@ public class TaxPeriodService(
             period.ClosedAt = DateTime.UtcNow;
             period.UpdatedAt = DateTime.UtcNow;
             await context.SaveChangesAsync(cancellationToken);
+
+            logger.LogInformation("Tax period {Name} closed by user {UserId}", period.Name, userId);
         }
 
         return await ToDtoAsync(period, cancellationToken);
@@ -187,6 +194,8 @@ public class TaxPeriodService(
             period.LockedAt = DateTime.UtcNow;
             period.UpdatedAt = DateTime.UtcNow;
             await context.SaveChangesAsync(cancellationToken);
+
+            logger.LogInformation("Tax period {Name} locked by user {UserId}", period.Name, userId);
 
             await notificationService.CreateAsync(
                 userId,
@@ -224,23 +233,6 @@ public class TaxPeriodService(
         await context.SaveChangesAsync(cancellationToken);
     }
 
-    // ----- helpers -----
-
-    private async Task<bool> AutoCloseIfEndedAsync(TaxPeriod period, CancellationToken cancellationToken)
-    {
-        if (period.Status == TaxPeriodStatus.Open && period.EndDate < DateTime.UtcNow)
-        {
-            period.Status = TaxPeriodStatus.Closed;
-            period.ClosedAt ??= DateTime.UtcNow;
-            period.UpdatedAt = DateTime.UtcNow;
-            await context.SaveChangesAsync(cancellationToken);
-            logger.LogInformation("Tax period {Name} auto-closed after end date", period.Name);
-            return true;
-        }
-
-        return false;
-    }
-
     private async Task<TaxPeriod> GetOwnedAsync(Guid userId, Guid periodId, CancellationToken cancellationToken)
     {
         var taxAccountId = await context.TaxAccounts
@@ -255,6 +247,7 @@ public class TaxPeriodService(
     private async Task<TaxPeriodDto> ToDtoAsync(TaxPeriod period, CancellationToken cancellationToken)
     {
         var count = await context.Transactions
+            .AsNoTracking()
             .CountAsync(t => t.TaxPeriodId == period.Id, cancellationToken);
 
         return new TaxPeriodDto(

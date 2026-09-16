@@ -16,6 +16,7 @@ public class ReceiptConfiguration : IEntityTypeConfiguration<Receipt>
         builder.Property(r => r.MerchantName).HasMaxLength(255);
         builder.Property(r => r.FileHash).HasMaxLength(64);
         builder.HasIndex(r => new { r.UserId, r.FileHash });
+        builder.HasIndex(r => new { r.UserId, r.CreatedAt });
 
         builder.HasOne(r => r.User)
             .WithMany(u => u.Receipts)

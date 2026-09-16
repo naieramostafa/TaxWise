@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: streamline_tax_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+        cache-dependency-path: 'src/streamline-tax-ui/package-lock.json'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build backend
+      run: dotnet build --no-restore --configuration Release
+
+    - name: Build frontend
+      working-directory: src/streamline-tax-ui
+      run: |
+        npm ci
+        npm run build
+
+    - name: Run backend tests
+      run: dotnet test --no-build --configuration Release --verbosity normal
+
+    - name: Publish
+      run: dotnet publish src/StreamlineTax.Api/StreamlineTax.Api.csproj --configuration Release --output ./publish
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: api-publish
+        path: ./publish

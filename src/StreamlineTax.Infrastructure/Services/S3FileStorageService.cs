@@ -6,10 +6,11 @@ using StreamlineTax.Application.Common.Interfaces;
 
 namespace StreamlineTax.Infrastructure.Services;
 
-public class S3FileStorageService : IFileStorageService
+public class S3FileStorageService : IFileStorageService, IDisposable
 {
     private readonly IAmazonS3 _s3Client;
     private readonly string _bucketName;
+    private bool _disposed;
 
     public S3FileStorageService(IConfiguration configuration)
     {
@@ -69,8 +70,6 @@ public class S3FileStorageService : IFileStorageService
 
     private async Task EnsureBucketExistsAsync(CancellationToken cancellationToken)
     {
-        // Idempotent bucket creation. MinIO returns 403/409 for an existing bucket,
-        // so any S3 exception here is treated as "bucket already exists".
         try
         {
             await _s3Client.PutBucketAsync(new PutBucketRequest
@@ -80,7 +79,24 @@ public class S3FileStorageService : IFileStorageService
         }
         catch (AmazonS3Exception)
         {
-            // Bucket already exists — nothing to do
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                _s3Client?.Dispose();
+            }
+            _disposed = true;
         }
     }
 }

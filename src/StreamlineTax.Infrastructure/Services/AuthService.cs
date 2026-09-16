@@ -19,6 +19,14 @@ public class AuthService(
     IEmailService emailService,
     ILogger<AuthService> logger) : IAuthService
 {
+    private readonly Lazy<SymmetricSecurityKey> _signingKey = new(() =>
+    {
+        var jwtKey = configuration["Jwt:Key"]
+            ?? Environment.GetEnvironmentVariable("JWT_KEY")
+            ?? throw new InvalidOperationException("JWT signing key is not configured");
+        return new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+    });
+
     public async Task<AuthResult> RegisterAsync(string email, string password, string name)
     {
         var existing = await userManager.FindByEmailAsync(email);
@@ -77,8 +85,11 @@ public class AuthService(
 
     public async Task LogoutAsync(string userId)
     {
+        if (!Guid.TryParse(userId, out var userGuid))
+            return;
+
         var tokens = await context.RefreshTokens
-            .Where(t => t.UserId.ToString() == userId)
+            .Where(t => t.UserId == userGuid)
             .ToListAsync();
 
         foreach (var token in tokens)
@@ -172,12 +183,7 @@ public class AuthService(
 
     private string GenerateAccessToken(AppUser user)
     {
-        var jwtKey = configuration["Jwt:Key"]
-            ?? Environment.GetEnvironmentVariable("JWT_KEY")
-            ?? throw new InvalidOperationException("JWT signing key is not configured");
-
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var creds = new SigningCredentials(_signingKey.Value, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
         {

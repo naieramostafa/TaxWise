@@ -11,6 +11,7 @@ import {
   TaxPeriod,
   AppNotification,
   TransactionCategory,
+  PaginatedResponse,
 } from '../models';
 import { environment } from '../../environments/environment';
 
@@ -30,12 +31,14 @@ export class ApiService {
     return this.http.get<Receipt[]>(`${this.baseUrl}/receipts`);
   }
 
-  getTransactions(year?: number, month?: number, category?: string): Observable<Transaction[]> {
+  getTransactions(year?: number, month?: number, category?: string, page?: number, pageSize?: number): Observable<PaginatedResponse<Transaction>> {
     let params = new HttpParams();
     if (year) params = params.set('year', year);
     if (month) params = params.set('month', month);
     if (category) params = params.set('category', category);
-    return this.http.get<Transaction[]>(`${this.baseUrl}/transactions`, { params });
+    if (page) params = params.set('page', page);
+    if (pageSize) params = params.set('pageSize', pageSize);
+    return this.http.get<PaginatedResponse<Transaction>>(`${this.baseUrl}/transactions`, { params });
   }
 
   categorizeTransaction(transactionId: string, category: string): Observable<void> {

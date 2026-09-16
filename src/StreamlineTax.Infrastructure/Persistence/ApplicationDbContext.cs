@@ -34,6 +34,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasKey(rt => rt.Id);
             entity.Property(rt => rt.Token).HasMaxLength(256);
             entity.HasIndex(rt => rt.Token).IsUnique();
+            entity.HasIndex(rt => rt.UserId);
+            entity.HasIndex(rt => rt.ExpiresAt);
             entity.HasOne(rt => rt.User)
                 .WithMany()
                 .HasForeignKey(rt => rt.UserId)

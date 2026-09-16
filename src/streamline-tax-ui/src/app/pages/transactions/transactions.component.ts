@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, inject, DestroyRef, signal } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -27,6 +27,8 @@ export class TransactionsComponent implements OnInit {
   editDate = '';
   error = '';
   deleteConfirmId?: string;
+  loading = signal(true);
+  saving = signal(false);
 
   private destroyRef = inject(DestroyRef);
 
@@ -38,9 +40,16 @@ export class TransactionsComponent implements OnInit {
   }
 
   private load() {
-    this.api.getTransactions().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(t => {
-      this.allTransactions = t;
-      this.applyFilter();
+    this.loading.set(true);
+    this.api.getTransactions().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: res => {
+        this.allTransactions = res.items;
+        this.applyFilter();
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+      }
     });
   }
 
@@ -71,13 +80,18 @@ export class TransactionsComponent implements OnInit {
   }
 
   onCategoryChange(transactionId: string, category: TransactionCategory) {
+    this.saving.set(true);
     this.api.categorizeTransaction(transactionId, category).subscribe({
       next: () => {
         const tx = this.allTransactions.find(t => t.id === transactionId);
         if (tx) tx.category = category;
         this.applyFilter();
+        this.saving.set(false);
       },
-      error: (e) => this.handleError(e),
+      error: (e) => {
+        this.handleError(e);
+        this.saving.set(false);
+      },
     });
   }
 
@@ -94,6 +108,7 @@ export class TransactionsComponent implements OnInit {
   }
 
   saveEdit(tx: Transaction) {
+    this.saving.set(true);
     this.api
       .updateTransaction(tx.id, {
         amount: this.editAmount,
@@ -109,8 +124,12 @@ export class TransactionsComponent implements OnInit {
           this.editingId = undefined;
           this.error = '';
           this.load();
+          this.saving.set(false);
         },
-        error: (e) => this.handleError(e),
+        error: (e) => {
+          this.handleError(e);
+          this.saving.set(false);
+        },
       });
   }
 
@@ -120,9 +139,16 @@ export class TransactionsComponent implements OnInit {
 
   confirmDelete(tx: Transaction) {
     this.deleteConfirmId = undefined;
+    this.saving.set(true);
     this.api.deleteTransaction(tx.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => this.load(),
-      error: (e) => this.handleError(e),
+      next: () => {
+        this.load();
+        this.saving.set(false);
+      },
+      error: (e) => {
+        this.handleError(e);
+        this.saving.set(false);
+      },
     });
   }
 

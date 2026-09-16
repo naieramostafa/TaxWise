@@ -17,11 +17,16 @@ public class TransactionsController(IMediator mediator) : ControllerBase
     private Guid UserId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] int? year, [FromQuery] int? month, [FromQuery] string? category)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int? year,
+        [FromQuery] int? month,
+        [FromQuery] string? category,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
     {
-        var query = new GetTransactionsQuery(UserId, year, month, category);
-        var transactions = await mediator.Send(query);
-        return Ok(transactions);
+        var query = new GetTransactionsQuery(UserId, year, month, category, page, pageSize);
+        var result = await mediator.Send(query);
+        return Ok(result);
     }
 
     [HttpPut("{id}")]

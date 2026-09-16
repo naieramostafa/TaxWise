@@ -30,5 +30,8 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasIndex(t => t.TaxPeriodId);
+        builder.HasIndex(t => t.UserId);
+        builder.HasIndex(t => new { t.UserId, t.TransactionDate });
+        builder.HasIndex(t => new { t.UserId, t.Category });
     }
 }

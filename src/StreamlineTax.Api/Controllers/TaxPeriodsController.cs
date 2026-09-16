@@ -31,8 +31,8 @@ public class TaxPeriodsController(
         if (period is null)
             return NotFound(new { error = $"Tax period {id} not found" });
 
-        var transactions = await mediator.Send(new GetTransactionsQuery(UserId, period.StartDate.Year, null, null));
-        var periodTransactions = transactions
+        var result = await mediator.Send(new GetTransactionsQuery(UserId, period.StartDate.Year, null, null));
+        var periodTransactions = result.Items
             .Where(t => t.TransactionDate >= period.StartDate && t.TransactionDate <= period.EndDate)
             .Select(t => new
             {

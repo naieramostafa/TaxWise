@@ -10,14 +10,18 @@ public class GetTaxSummaryQueryHandler(IApplicationDbContext context) : IRequest
     public async Task<TaxSummaryDto> Handle(GetTaxSummaryQuery request, CancellationToken cancellationToken)
     {
         var user = await context.Users
+            .AsNoTracking()
             .Include(u => u.TaxAccount)
             .FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken)
             ?? throw new KeyNotFoundException($"User {request.UserId} not found");
 
-        var transactionCount = await context.Transactions.CountAsync(t => t.UserId == request.UserId, cancellationToken);
+        var transactionCount = await context.Transactions
+            .AsNoTracking()
+            .CountAsync(t => t.UserId == request.UserId, cancellationToken);
 
         // Tax reserve is always calculated from underlying transaction data
         var totalReserved = await context.Transactions
+            .AsNoTracking()
             .Where(t => t.UserId == request.UserId)
             .SumAsync(t => (decimal?)t.TaxWithheld, cancellationToken) ?? 0m;
 

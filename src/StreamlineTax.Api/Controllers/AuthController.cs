@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StreamlineTax.Api.Models;
 using StreamlineTax.Application.Common.Interfaces;
 using System.Security.Claims;
 
@@ -18,6 +19,7 @@ public class AuthController(
     IValidator<ResetPasswordRequest> resetValidator) : ControllerBase
 {
     private Guid UserId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
@@ -131,11 +133,3 @@ public class AuthController(
     private static string DecodeToken(string base64) =>
         System.Text.Encoding.UTF8.GetString(System.Convert.FromBase64String(base64));
 }
-
-public record RegisterRequest(string Email, string Password, string Name);
-public record LoginRequest(string Email, string Password);
-public record RefreshRequest(string RefreshToken);
-public record EmailRequest(string Email);
-public record ConfirmEmailRequest(string Email, string Token);
-public record ResetPasswordRequest(string Email, string Token, string NewPassword);
-public record UpdateProfileRequest(string Name);
