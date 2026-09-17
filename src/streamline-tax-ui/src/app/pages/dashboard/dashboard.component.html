@@ -9,9 +9,9 @@
       </svg>
       <span>Welcome! Load sample data to explore the dashboard instantly.</span>
     </div>
-    <button class="btn" (click)="seedDemoData()" [disabled]="seeding">
-      <span class="spinner" *ngIf="seeding"></span>
-      <span *ngIf="!seeding">Load Sample Data</span>
+    <button class="btn" (click)="seedDemoData()" [disabled]="seeding()">
+      <span class="spinner" *ngIf="seeding()"></span>
+      <span *ngIf="!seeding()">Load Sample Data</span>
     </button>
   </div>
 

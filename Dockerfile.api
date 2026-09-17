@@ -7,13 +7,12 @@ COPY src/StreamlineTax.Infrastructure/StreamlineTax.Infrastructure.csproj src/St
 COPY src/StreamlineTax.Api/StreamlineTax.Api.csproj src/StreamlineTax.Api/
 RUN dotnet restore src/StreamlineTax.Api/StreamlineTax.Api.csproj
 
-COPY src/ src/
-WORKDIR /src/src/StreamlineTax.Api
+COPY src/ .
+WORKDIR /src/StreamlineTax.Api
 RUN dotnet publish -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
-COPY tessdata /app/tessdata
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "StreamlineTax.Api.dll"]
